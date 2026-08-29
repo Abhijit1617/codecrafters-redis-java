@@ -1,92 +1,233 @@
-Redis Server in Java
+<div align="center">
 
-A lightweight Redis-compatible server implemented from scratch in Java.
+⚡ Redis Server in Java
 
-Features
+A Redis-compatible in-memory server built from scratch with Java
 
-TCP-based Redis-compatible server
+<p>
+  <img src="https://img.shields.io/badge/Java-23-orange?style=for-the-badge&logo=openjdk" alt="Java 23"/>
+  <img src="https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven" alt="Maven"/>
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker" alt="Docker"/>
+  <img src="https://img.shields.io/badge/Kubernetes-Ready-326CE5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
+  <img src="https://img.shields.io/badge/Helm-Chart-0F1689?style=for-the-badge&logo=helm" alt="Helm"/>
+</p>
 
-RESP command parsing
+<p>
+  <b>TCP Sockets</b> • <b>RESP Protocol</b> • <b>Master-Replica Replication</b> • <b>Docker</b> • <b>Kubernetes</b>
+</p>
+
+<br/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&pause=1000&center=true&vCenter=true&width=650&lines=Building+Redis+from+Scratch+%F0%9F%9A%80;Java+%2B+TCP+Sockets+%2B+RESP;Master+%E2%86%92+Replica+Replication;Docker+%2B+Kubernetes+%2B+Helm" alt="Typing animation"/>
+
+</div>
+
+🚀 About the Project
+
+This project is a lightweight Redis-compatible server implemented from scratch in Java.
+
+It provides a practical implementation of Redis-style client-server communication, RESP parsing, in-memory key-value storage, and Master-Replica replication.
+
+The project also includes containerization and deployment support using Docker, Kubernetes, KIND, and Helm.
+
+✨ Features
+
+Feature
+
+Status
+
+TCP client-server communication
+
+✅
+
+RESP protocol parsing
+
+✅
 
 In-memory key-value storage
 
-PING, SET, GET, and INFO replication
+✅
 
-REPLCONF and PSYNC
+PING
+
+✅
+
+SET
+
+✅
+
+GET
+
+✅
+
+INFO replication
+
+✅
+
+REPLCONF
+
+✅
+
+PSYNC handshake
+
+✅
+
+Full synchronization
+
+✅
+
+RDB payload handling
+
+✅
 
 Master-Replica replication
 
-Full synchronization and RDB payload handling
+✅
+
+Replication command streaming
+
+✅
 
 Docker support
 
-Kubernetes, KIND, and Helm support
+✅
 
-Technologies
+Kubernetes support
 
-Java
+✅
 
-Maven
+KIND support
 
-TCP/IP & Java Sockets
+✅
 
-Redis RESP Protocol
+Helm support
 
-Docker
+✅
 
-Kubernetes
+🧠 How It Works
 
-KIND
+                         ┌──────────────────────┐
+                         │       CLIENT         │
+                         │   Redis Commands     │
+                         └──────────┬───────────┘
+                                    │
+                                    │ RESP / TCP
+                                    ▼
+                         ┌──────────────────────┐
+                         │    REDIS MASTER      │
+                         │      :6379           │
+                         │                      │
+                         │  In-Memory Storage   │
+                         └──────────┬───────────┘
+                                    │
+                           Replication Stream
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │    REDIS REPLICA     │
+                         │      :6382           │
+                         │                      │
+                         │  Synchronized Data  │
+                         └──────────────────────┘
 
-Helm
+Example
 
-Git & GitHub
+SET city Mumbai
+      │
+      ▼
+┌──────────────┐
+│ Master :6379 │
+└──────┬───────┘
+       │
+       │ Replication
+       ▼
+┌──────────────┐
+│ Replica :6382│
+└──────────────┘
 
-Architecture
+🔄 Master-Replica Replication
 
-                   ┌──────────────────────┐
-                   │     Redis Master     │
-                   │      Port: 6379      │
-                   └──────────┬───────────┘
-                              │
-                     Replication Stream
-                              │
-                              ▼
-                   ┌──────────────────────┐
-                   │     Redis Replica    │
-                   │      Port: 6382      │
-                   └──────────────────────┘
+The replica performs a synchronization handshake with the Master:
 
-Master-Replica Replication
-
-The replica connects to the master using:
-
-1. PING
-2. REPLCONF listening-port
-3. REPLCONF capa
-4. PSYNC
-5. FULLRESYNC
-6. RDB payload
-7. Replication command stream
+PING
+  ↓
+REPLCONF listening-port
+  ↓
+REPLCONF capa
+  ↓
+PSYNC
+  ↓
+FULLRESYNC
+  ↓
+RDB Payload
+  ↓
+Replication Command Stream
 
 Example:
 
-Master PING response: +PONG
-REPLCONF listening-port response: +OK
-REPLCONF capa response: +OK
-PSYNC response: +FULLRESYNC <replication-id> 0
+Master PING response:
++PONG
 
-Write commands are then streamed from the Master to the Replica.
+REPLCONF listening-port:
++OK
 
-SET city Mumbai
-        │
-        ▼
-Master :6379
-        │
-        ▼
-Replica :6382
+REPLCONF capa:
++OK
 
-Supported Commands
+PSYNC response:
++FULLRESYNC <replication-id> 0
+
+After synchronization, write commands are streamed to the replica.
+
+Master
+  │
+  │ SET city Mumbai
+  ▼
+Replica
+  │
+  │ GET city
+  ▼
+Mumbai
+
+📡 Replication Verification
+
+Run:
+
+INFO replication
+
+Master
+
+role:master
+master_replid:<replication-id>
+master_repl_offset:0
+
+Replica
+
+role:slave
+master_replid:<replication-id>
+master_repl_offset:0
+
+The replica also acknowledges replication progress using:
+
+REPLCONF ACK <offset>
+
+🛠️ Tech Stack
+
+┌─────────────────────────────────────────┐
+│              TECHNOLOGIES               │
+├─────────────────────────────────────────┤
+│ ☕ Java                                  │
+│ 📦 Maven                                 │
+│ 🔌 TCP / Java Sockets                    │
+│ 📡 Redis RESP Protocol                   │
+│ 🐳 Docker                                │
+│ ☸️ Kubernetes                            │
+│ 🧩 KIND                                  │
+│ ⎈ Helm                                   │
+│ 🔀 Git & GitHub                          │
+└─────────────────────────────────────────┘
+
+💻 Supported Commands
 
 PING
 
@@ -108,7 +249,7 @@ GET
 
 GET city
 
-Example:
+Response:
 
 Mumbai
 
@@ -116,17 +257,7 @@ INFO replication
 
 INFO replication
 
-Master:
-
-role:master
-master_replid:<replication-id>
-master_repl_offset:0
-
-Replica:
-
-role:slave
-master_replid:<replication-id>
-master_repl_offset:0
+Returns Master or Replica replication information.
 
 REPLCONF
 
@@ -138,121 +269,169 @@ PSYNC
 
 PSYNC ? -1
 
-Example response:
+Used by the replica to request synchronization.
 
-+FULLRESYNC <replication-id> 0
-
-Running Locally
+▶️ Run Locally
 
 Prerequisites
 
-Install Java, Maven, and Git.
+Install:
+
+Java
+
+Maven
+
+Git
+
+Check Java:
 
 java -version
+
+Check Maven:
+
 mvn -version
 
 Build
 
-git clone https://github.com/Abhijit1617/codecrafters-redis-java.git
-cd codecrafters-redis-java
+From the project directory:
+
 mvn clean package
 
-Start Redis Master
+Start Master
 
 java -jar target/codecrafters-redis.jar --port 6379
 
-Start Redis Replica
+Master:
 
-Open another terminal:
+localhost:6379
+
+Start Replica
+
+Open another terminal in the project directory:
 
 java -jar target/codecrafters-redis.jar --port 6382 --replicaof "localhost 6379"
 
-Testing
+Replica:
 
-Test the server with a Redis client or TCP client:
+localhost:6382
+
+🧪 Quick Test
+
+Run the Master and Replica first.
+
+Then test:
 
 PING
-SET city Mumbai
-GET city
-INFO replication
 
-Expected:
+PONG
 
-PING
-→ PONG
+Set a value on the Master:
 
 SET city Mumbai
-→ OK
+
+OK
+
+Read the value:
 
 GET city
-→ Mumbai
 
-To verify replication:
+Mumbai
 
-Master :6379
-SET city Mumbai
-        │
-        ▼
-Replica :6382
+Then query the Replica:
+
 GET city
-→ Mumbai
 
-Docker
+Mumbai
 
-Build:
+This confirms that the write was replicated.
+
+🐳 Docker
+
+Build Image
 
 docker build -t myredis .
 
-Run Master:
+Run Master
 
 docker run -p 6379:6379 myredis
 
-Run Replica:
+Run Replica
 
 docker run -p 6382:6382 myredis --port 6382 --replicaof "<MASTER_IP> 6379"
 
-Replace <MASTER_IP> with the address reachable by the container.
+Replace <MASTER_IP> with the address reachable from the container.
 
-Kubernetes
+☸️ Kubernetes
 
-Kubernetes configuration is available under:
+The project includes Kubernetes configuration under:
 
 kind/
 
-Create a KIND cluster:
+Basic architecture:
+
+             Kubernetes Cluster
+                     │
+                     ▼
+              ┌─────────────┐
+              │ Redis Pod   │
+              └──────┬──────┘
+                     │
+                     ▼
+              ┌─────────────┐
+              │   Service   │
+              └─────────────┘
+
+Create KIND Cluster
+
+Example configuration:
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30007
+        hostPort: 30007
+
+Create the cluster:
 
 kind create cluster --config k.yml --name redis-cluster
 
-Build and load the image:
+Build and Load Docker Image
 
 docker build -t myredis:latest .
+
 kind load docker-image myredis:latest --name redis-cluster
 
-Deploy:
+Deploy
 
 kubectl apply -f pod.yml
 kubectl apply -f service.yml
 
-Check:
+Check Pods:
 
 kubectl get pods
+
+Check Services:
+
 kubectl get services
 
-Helm
+⎈ Helm
 
-The Helm chart is available under:
+The project contains a Helm chart:
 
 redis-chart/
 
-Render:
+Render Templates
 
 helm template redis-chart
 
-Lint:
+Validate Chart
 
 helm lint redis-chart
 
-Install:
+Install
 
 helm install redis-app redis-chart
 
@@ -261,37 +440,45 @@ Check:
 kubectl get pods
 kubectl get services
 
-Uninstall:
+Uninstall
 
 helm uninstall redis-app
 
-Project Structure
+📁 Project Structure
 
 codecrafters-redis-java/
 │
-├── src/
-│   └── main/
-│       └── java/
+├── 📂 src/
+│   └── 📂 main/
+│       └── 📂 java/
 │           └── Main.java
 │
-├── dind/
-├── kind/
-├── redis-chart/
-├── Dockerfile
-├── pom.xml
-├── README.md
+├── 📂 dind/
+│   └── Docker configuration
+│
+├── 📂 kind/
+│   └── Kubernetes configuration
+│
+├── 📂 redis-chart/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+│
+├── 🐳 Dockerfile
+├── 📦 pom.xml
+├── 📖 README.md
 ├── .gitignore
 └── azure-pipelines.yml
 
-RESP Protocol
+📡 RESP Protocol
 
 The server communicates using the Redis Serialization Protocol (RESP).
 
-Example:
+For example:
 
 SET city Mumbai
 
-RESP representation:
+is represented as:
 
 *3\r\n
 $3\r\n
@@ -301,7 +488,37 @@ city\r\n
 $6\r\n
 Mumbai\r\n
 
-Learning Objectives
+The server reads the RESP request, parses the command and arguments, and executes the corresponding operation.
+
+🔁 Complete Replication Flow
+
+                   CLIENT
+                      │
+                      │ SET city Mumbai
+                      ▼
+              ┌───────────────┐
+              │     MASTER    │
+              │     :6379     │
+              └───────┬───────┘
+                      │
+                      │ PING
+                      │ REPLCONF
+                      │ PSYNC
+                      │ FULLRESYNC
+                      │ RDB
+                      │ COMMAND STREAM
+                      ▼
+              ┌───────────────┐
+              │    REPLICA    │
+              │     :6382     │
+              └───────┬───────┘
+                      │
+                      ▼
+                LOCAL STORAGE
+
+🎯 Learning Objectives
+
+This project provides practical experience with:
 
 Java networking
 
@@ -321,15 +538,15 @@ RDB synchronization concepts
 
 Replication offsets
 
-Docker
+Docker containerization
 
-Kubernetes
+Kubernetes deployment
 
 Helm
 
 Git and GitHub
 
-Future Improvements
+🚧 Future Improvements
 
 DEL
 
@@ -339,7 +556,7 @@ INCR
 
 EXPIRE and TTL
 
-Concurrent request processing
+Concurrent client handling
 
 Persistent storage
 
@@ -349,6 +566,16 @@ Additional Redis data types
 
 Automated integration testing
 
-License
+Improved command parsing
 
-This project is intended for educational and portfolio purposes.
+Better error handling
+
+<div align="center">
+
+⭐ If you find this project useful, consider giving it a star!
+
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&height=100&section=footer" alt="Footer animation"/>
+
+</div>
