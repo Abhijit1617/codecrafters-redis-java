@@ -1,137 +1,354 @@
-[![progress-banner](https://backend.codecrafters.io/progress/redis/b7dbc9e6-45a6-4033-97e0-c93c0a469df9)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+Redis Server in Java
 
-This is a starting point for Java solutions to the
-["Build Your Own Redis" Challenge](https://codecrafters.io/challenges/redis).
+A lightweight Redis-compatible server implemented from scratch in Java.
 
-In this challenge, you'll build a toy Redis clone that's capable of handling
-basic commands like `PING`, `SET` and `GET`. Along the way we'll learn about
-event loops, the Redis protocol and more.
+Features
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+TCP-based Redis-compatible server
 
-# Passing the first stage
+RESP command parsing
 
-The entry point for your Redis implementation is in `src/main/java/Main.java`.
-Study and uncomment the relevant code, and push your changes to pass the first
-stage:
+In-memory key-value storage
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+PING, SET, GET, and INFO replication
 
-That's all!
+REPLCONF and PSYNC
 
-# Stage 2 & beyond
+Master-Replica replication
 
-Note: This section is for stages 2 and beyond.
+Full synchronization and RDB payload handling
 
-1. Ensure you have `mvn` installed locally
-1. Run `./your_program.sh` to run your Redis server, which is implemented in
-   `src/main/java/Main.java`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+Docker support
 
-### Dockerize
+Kubernetes, KIND, and Helm support
 
-```shell
+Technologies
+
+Java
+
+Maven
+
+TCP/IP & Java Sockets
+
+Redis RESP Protocol
+
+Docker
+
+Kubernetes
+
+KIND
+
+Helm
+
+Git & GitHub
+
+Architecture
+
+                   ┌──────────────────────┐
+                   │     Redis Master     │
+                   │      Port: 6379      │
+                   └──────────┬───────────┘
+                              │
+                     Replication Stream
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │     Redis Replica    │
+                   │      Port: 6382      │
+                   └──────────────────────┘
+
+Master-Replica Replication
+
+The replica connects to the master using:
+
+1. PING
+2. REPLCONF listening-port
+3. REPLCONF capa
+4. PSYNC
+5. FULLRESYNC
+6. RDB payload
+7. Replication command stream
+
+Example:
+
+Master PING response: +PONG
+REPLCONF listening-port response: +OK
+REPLCONF capa response: +OK
+PSYNC response: +FULLRESYNC <replication-id> 0
+
+Write commands are then streamed from the Master to the Replica.
+
+SET city Mumbai
+        │
+        ▼
+Master :6379
+        │
+        ▼
+Replica :6382
+
+Supported Commands
+
+PING
+
+PING
+
+Response:
+
+PONG
+
+SET
+
+SET city Mumbai
+
+Response:
+
+OK
+
+GET
+
+GET city
+
+Example:
+
+Mumbai
+
+INFO replication
+
+INFO replication
+
+Master:
+
+role:master
+master_replid:<replication-id>
+master_repl_offset:0
+
+Replica:
+
+role:slave
+master_replid:<replication-id>
+master_repl_offset:0
+
+REPLCONF
+
+REPLCONF listening-port 6382
+REPLCONF capa psync2
+REPLCONF ACK 0
+
+PSYNC
+
+PSYNC ? -1
+
+Example response:
+
++FULLRESYNC <replication-id> 0
+
+Running Locally
+
+Prerequisites
+
+Install Java, Maven, and Git.
+
+java -version
+mvn -version
+
+Build
+
+git clone https://github.com/Abhijit1617/codecrafters-redis-java.git
+cd codecrafters-redis-java
+mvn clean package
+
+Start Redis Master
+
+java -jar target/codecrafters-redis.jar --port 6379
+
+Start Redis Replica
+
+Open another terminal:
+
+java -jar target/codecrafters-redis.jar --port 6382 --replicaof "localhost 6379"
+
+Testing
+
+Test the server with a Redis client or TCP client:
+
+PING
+SET city Mumbai
+GET city
+INFO replication
+
+Expected:
+
+PING
+→ PONG
+
+SET city Mumbai
+→ OK
+
+GET city
+→ Mumbai
+
+To verify replication:
+
+Master :6379
+SET city Mumbai
+        │
+        ▼
+Replica :6382
+GET city
+→ Mumbai
+
+Docker
+
+Build:
+
 docker build -t myredis .
+
+Run Master:
 
 docker run -p 6379:6379 myredis
 
-ip route show | grep default | awk '{print $3}'
+Run Replica:
 
-docker run -p 6480:6480 myredis --port 6480 --replicaof "<ipaddress> 6379"
-```
+docker run -p 6382:6382 myredis --port 6382 --replicaof "<MASTER_IP> 6379"
 
-### Self Hosted Agent with Docker capabilities
+Replace <MASTER_IP> with the address reachable by the container.
 
-```shell
-cd dind
+Kubernetes
 
-docker build --tag "azp-agent:linux"  .
+Kubernetes configuration is available under:
 
-docker run --privileged -e AZP_URL="https://dev.azure.com/ChaitanyaDSharma" -e AZP_TOKEN="use your own token" -e AZP_POOL="agent" -e AZP_AGENT_NAME="Docker Agent - Linux" --name "azp-agent-linux" azp-agent:linux
-```
+kind/
 
-### K8s cluster on KIND + Helm
+Create a KIND cluster:
 
-```shell
-mkdir kind
-cd kind
-vi k.yml
-```
-```yml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 30007
-    hostPort: 30007
-```
-```shell
-kind create cluster --config k.yml --name cluster-name
-cd ..
-docker build -t beelzekamibub/redis:latest .
-kind load docker-image beelzekamibub/redis:latest --name cluster-name
-vi pod.yml
-```
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    run: redis
-  name: redis
-  namespace: default
-spec:
-  containers:
-    - image: beelzekamibub/redis:latest
-      imagePullPolicy: Never
-      name: redis
-```
-```shell
-vi service.yml
-```
-```yml
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    run: redis
-  name: redis-service
-spec:
-  ports:
-    - port: 6379
-      protocol: TCP
-      targetPort: 6379
-      nodePort: 30007
-  selector:
-    run: redis
-  type: NodePort
-```
-```shell
-alias k=kubectl
-k apply -f pod.yml
-k apply -f service.yml
-# run ise
-helm create redis-chart
-```
+kind create cluster --config k.yml --name redis-cluster
 
-clean out templates folder, delete charts folder, as no dependencies
+Build and load the image:
 
-Move the pod.yml and service.yml to 
+docker build -t myredis:latest .
+kind load docker-image myredis:latest --name redis-cluster
 
-templatize the yaml files and add to values.yml
+Deploy:
 
-add annotations for helm hook
+kubectl apply -f pod.yml
+kubectl apply -f service.yml
 
-```shell
+Check:
+
+kubectl get pods
+kubectl get services
+
+Helm
+
+The Helm chart is available under:
+
+redis-chart/
+
+Render:
+
 helm template redis-chart
+
+Lint:
+
 helm lint redis-chart
+
+Install:
+
 helm install redis-app redis-chart
 
+Check:
+
+kubectl get pods
+kubectl get services
+
+Uninstall:
+
 helm uninstall redis-app
-```
+
+Project Structure
+
+codecrafters-redis-java/
+│
+├── src/
+│   └── main/
+│       └── java/
+│           └── Main.java
+│
+├── dind/
+├── kind/
+├── redis-chart/
+├── Dockerfile
+├── pom.xml
+├── README.md
+├── .gitignore
+└── azure-pipelines.yml
+
+RESP Protocol
+
+The server communicates using the Redis Serialization Protocol (RESP).
+
+Example:
+
+SET city Mumbai
+
+RESP representation:
+
+*3\r\n
+$3\r\n
+SET\r\n
+$4\r\n
+city\r\n
+$6\r\n
+Mumbai\r\n
+
+Learning Objectives
+
+Java networking
+
+TCP sockets
+
+Client-server architecture
+
+Redis protocol
+
+RESP parsing
+
+In-memory data structures
+
+Master-Replica replication
+
+RDB synchronization concepts
+
+Replication offsets
+
+Docker
+
+Kubernetes
+
+Helm
+
+Git and GitHub
+
+Future Improvements
+
+DEL
+
+EXISTS
+
+INCR
+
+EXPIRE and TTL
+
+Concurrent request processing
+
+Persistent storage
+
+Partial resynchronization
+
+Additional Redis data types
+
+Automated integration testing
+
+License
+
+This project is intended for educational and portfolio purposes.
